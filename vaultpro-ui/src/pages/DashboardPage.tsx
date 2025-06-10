@@ -10,11 +10,24 @@ import VaultForm from '../components/VaultForm';
 import VaultList from '../components/VaultList';
 import type { Contraseña } from '../services/passwordService';
 import { useNavigate } from 'react-router-dom';
+import FileUploadForm from '../components/FileUploadForm';
+import FileList from '../components/FileList';
+import { iniciarConexion, detenerConexion } from '../services/signalrClient';
+
+
+import {
+  descargarArchivo,
+  eliminarArchivo,
+  listarArchivos,
+  type Archivo
+} from '../services/fileService';
+
 
 const DashboardPage = () => {
   const [perfil, setPerfil] = useState<{ email: string; rol: string } | null>(null);
   const [contraseñas, setContraseñas] = useState<Contraseña[]>([]);
   const [loading, setLoading] = useState(true);
+  const [archivos, setArchivos] = useState<Archivo[]>([]);
 
   const navigate = useNavigate();
 
@@ -22,6 +35,25 @@ const DashboardPage = () => {
     const data = await obtenerContraseñas();
     setContraseñas(data);
   };
+
+  const cargarArchivos = async () => {
+    const data = await listarArchivos();
+    setArchivos(data);
+  };
+
+  useEffect(() => {
+    getPerfil().then(setPerfil).catch(() => (window.location.href = '/'));
+    cargarContraseñas();
+    cargarArchivos();
+
+    iniciarConexion(cargarArchivos, cargarArchivos);
+
+
+    return () => {
+      detenerConexion();
+    };
+  }, []);
+
 
   const handleCrear = async (nombre: string, usuario: string, clave: string) => {
     await crearContraseña({ nombre, nombreUsuario: usuario, contraseña: clave });
@@ -33,13 +65,15 @@ const DashboardPage = () => {
     await cargarContraseñas();
   };
 
+
+
   useEffect(() => {
     getPerfil()
-  .then(setPerfil)
-  .catch(() => {
-    localStorage.removeItem('token');
-    navigate('/');
-  });
+      .then(setPerfil)
+      .catch(() => {
+        localStorage.removeItem('token');
+        navigate('/');
+      });
 
     cargarContraseñas().finally(() => setLoading(false));
   }, []);
@@ -59,6 +93,17 @@ const DashboardPage = () => {
 
       <Typography variant="h6" gutterBottom>Mis Contraseñas</Typography>
       <VaultList contraseñas={contraseñas} onDelete={handleEliminar} />
+
+      <Typography variant="h6" gutterBottom>Vault de Archivos</Typography>
+      <FileUploadForm onUpload={cargarArchivos} />
+      <FileList
+        archivos={archivos}
+        onDownload={descargarArchivo}
+        onDelete={async (id) => {
+          await eliminarArchivo(id);
+          await cargarArchivos();
+        }}
+      />
     </Container>
   );
 };
