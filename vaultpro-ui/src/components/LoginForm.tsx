@@ -1,75 +1,139 @@
+// src/components/LoginForm.tsx
 import { useState } from 'react';
-import { TextField, Button, Typography, Paper, Box } from '@mui/material';
+import {
+  TextField,
+  Button,
+  Typography,
+  Box,
+  InputAdornment,
+  Alert,
+  Fade,
+  Stack,
+} from '@mui/material';
+import { Email, Lock } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import API from '../services/api';
+import TwoFADialog from './TwoFADialog';
 
 const LoginForm = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [require2FA, setRequire2FA] = useState(false);
-  const [codigo2FA, setCodigo2FA] = useState('');
+  const [show2FADialog, setShow2FADialog] = useState(false);
+  const [tempCreds, setTempCreds] = useState<{ email: string; password: string } | null>(null);
+  const [error, setError] = useState('');
   const navigate = useNavigate();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    try {
-      const response = await API.post('/auth/login', {
-        email,
-        password,
-        codigo2FA: codigo2FA || null,
-      });
+    setError('');
+    setShow2FADialog(false);
 
+    try {
+      const response = await API.post('/auth/login', { email, password });
+
+      // login exitoso sin 2FA
       localStorage.setItem('token', response.data.token);
-      alert('Login exitoso');
       navigate('/dashboard');
     } catch (error: any) {
-      if (error.response?.data?.require2fa) {
-        setRequire2FA(true);
-        alert('Este usuario requiere código 2FA');
+      const res = error.response?.data;
+
+      // ⚠️ verifica que require2fa sea true y NO haya un mensaje de error de contraseña
+      if (res?.require2fa === true && !res?.message?.toLowerCase().includes('contraseña')) {
+        setTempCreds({ email, password });
+        setShow2FADialog(true);
       } else {
-        alert('Credenciales inválidas');
+        setError(res?.message || 'Credenciales inválidas');
       }
     }
   };
 
+  const handle2FASubmit = async (codigo: string) => {
+    try {
+      const response = await API.post('/auth/login', {
+        email: tempCreds?.email,
+        password: tempCreds?.password,
+        codigo2FA: codigo,
+      });
+
+      localStorage.setItem('token', response.data.token);
+      navigate('/dashboard');
+    } catch {
+      setError('Código 2FA inválido');
+    } finally {
+      setShow2FADialog(false);
+    }
+  };
+
   return (
-    <Paper elevation={3} sx={{ p: 4 }}>
-      <Typography variant="h5" gutterBottom align="center">
-        Iniciar Sesión
-      </Typography>
-      <Box
-        component="form"
-        onSubmit={handleLogin}
-        display="flex"
-        flexDirection="column"
-        gap={2}
-      >
-        <TextField
-          label="Email"
-          fullWidth
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
-        <TextField
-          label="Contraseña"
-          type="password"
-          fullWidth
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
-        {require2FA && (
-          <TextField
-            label="Código 2FA"
-            fullWidth
-            value={codigo2FA}
-            onChange={(e) => setCodigo2FA(e.target.value)}
-          />
-        )}
-        <Button type="submit" variant="contained">
-          Ingresar
-        </Button>
-      </Box>
-    </Paper>
+    <>
+      <Fade in timeout={500}>
+        <Box>
+          <Typography variant="h5" align="center" mb={2} fontWeight={500}>
+            Iniciar sesión en Vault Pro
+          </Typography>
+
+          {error && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {error}
+            </Alert>
+          )}
+
+          <Box
+            component="form"
+            onSubmit={handleLogin}
+            display="flex"
+            flexDirection="column"
+            gap={2}
+          >
+            <TextField
+              label="Email"
+              type="email"
+              fullWidth
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <Email />
+                  </InputAdornment>
+                ),
+              }}
+            />
+
+            <TextField
+              label="Contraseña"
+              type="password"
+              fullWidth
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <Lock />
+                  </InputAdornment>
+                ),
+              }}
+            />
+
+            <Stack direction="row" justifyContent="space-between" alignItems="center">
+              <Button type="submit" variant="contained">
+                Ingresar
+              </Button>
+
+              <Button onClick={() => navigate('/register')} variant="text">
+                Crear cuenta
+              </Button>
+            </Stack>
+          </Box>
+        </Box>
+      </Fade>
+
+      <TwoFADialog
+        open={show2FADialog}
+        onSubmit={handle2FASubmit}
+        onCancel={() => setShow2FADialog(false)}
+      />
+    </>
   );
 };
 

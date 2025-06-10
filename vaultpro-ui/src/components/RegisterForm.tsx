@@ -1,3 +1,4 @@
+// src/components/RegisterForm.tsx
 import { useState } from 'react';
 import {
   TextField,
@@ -9,9 +10,13 @@ import {
   FormControl,
   Paper,
   Box,
+  InputAdornment,
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { register } from '../services/authService';
+import EmailIcon from '@mui/icons-material/Email';
+import LockIcon from '@mui/icons-material/Lock';
+import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 
 const RegisterForm = () => {
   const [email, setEmail] = useState('');
@@ -32,10 +37,19 @@ const RegisterForm = () => {
   };
 
   return (
-    <Paper elevation={3} sx={{ p: 4 }}>
+    <Paper
+      elevation={4}
+      sx={{
+        p: 4,
+        backdropFilter: 'blur(10px)',
+        backgroundColor: 'rgba(255, 255, 255, 0.75)',
+        borderRadius: 3,
+      }}
+    >
       <Typography variant="h5" gutterBottom align="center">
         Crear Cuenta
       </Typography>
+
       <Box
         component="form"
         onSubmit={handleRegister}
@@ -50,7 +64,15 @@ const RegisterForm = () => {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <EmailIcon />
+              </InputAdornment>
+            ),
+          }}
         />
+
         <TextField
           label="Contraseña"
           type="password"
@@ -58,7 +80,15 @@ const RegisterForm = () => {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <LockIcon />
+              </InputAdornment>
+            ),
+          }}
         />
+
         <FormControl fullWidth>
           <InputLabel id="rol-label">Rol</InputLabel>
           <Select
@@ -66,13 +96,19 @@ const RegisterForm = () => {
             value={rol}
             label="Rol"
             onChange={(e) => setRol(e.target.value)}
+            startAdornment={
+              <InputAdornment position="start">
+                <AdminPanelSettingsIcon />
+              </InputAdornment>
+            }
           >
             <MenuItem value="User">Usuario</MenuItem>
             <MenuItem value="Admin">Administrador</MenuItem>
             <MenuItem value="Auditor">Auditor</MenuItem>
           </Select>
         </FormControl>
-        <Button type="submit" variant="contained">
+
+        <Button type="submit" variant="contained" size="large">
           Registrarme
         </Button>
       </Box>

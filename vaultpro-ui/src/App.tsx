@@ -4,6 +4,7 @@ import DashboardPage from './pages/DashboardPage';
 import PrivateRoute from './components/PrivateRoute';
 import RegisterPage from './pages/RegisterPage';
 import Activar2FAPage from './pages/Activar2FAPage';
+import ArchivosPage from './pages/ArchivosPage';
 
 function App() {
   return (
@@ -24,6 +25,28 @@ function App() {
             <Activar2FAPage />
           </PrivateRoute>
         } />
+        <Route
+          path="/dashboard"
+          element={
+            <PrivateRoute>
+              <DashboardPage />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/archivos"
+          element={
+            <PrivateRoute>
+              <ArchivosPage />
+            </PrivateRoute>
+          } />
+        <Route
+          path="/activar-2fa"
+          element={
+            <PrivateRoute>
+              <ArchivosPage />
+            </PrivateRoute>
+          } />
       </Routes>
     </BrowserRouter>
   );

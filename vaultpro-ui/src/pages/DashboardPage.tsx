@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Container, Typography, Divider, CircularProgress } from '@mui/material';
+import { Typography, Divider, CircularProgress } from '@mui/material';
 import { getPerfil } from '../services/userService';
 import {
   obtenerContraseñas,
@@ -8,6 +8,7 @@ import {
 } from '../services/passwordService';
 import VaultForm from '../components/VaultForm';
 import VaultList from '../components/VaultList';
+import DashboardLayout from '../layouts/DashboardLayout';
 import type { Contraseña } from '../services/passwordService';
 import { useNavigate } from 'react-router-dom';
 import FileUploadForm from '../components/FileUploadForm';
@@ -78,10 +79,10 @@ const DashboardPage = () => {
     cargarContraseñas().finally(() => setLoading(false));
   }, []);
 
-  if (loading) return <CircularProgress />;
+   if (loading) return <CircularProgress sx={{ display: 'block', mx: 'auto', mt: 10 }} />;
 
   return (
-    <Container>
+    <DashboardLayout>
       <Typography variant="h4" gutterBottom>
         Bienvenido, {perfil?.email}
       </Typography>
@@ -94,6 +95,8 @@ const DashboardPage = () => {
       <Typography variant="h6" gutterBottom>Mis Contraseñas</Typography>
       <VaultList contraseñas={contraseñas} onDelete={handleEliminar} />
 
+      <Divider sx={{ my: 4 }} />
+
       <Typography variant="h6" gutterBottom>Vault de Archivos</Typography>
       <FileUploadForm onUpload={cargarArchivos} />
       <FileList
@@ -104,7 +107,7 @@ const DashboardPage = () => {
           await cargarArchivos();
         }}
       />
-    </Container>
+    </DashboardLayout>
   );
 };
 
