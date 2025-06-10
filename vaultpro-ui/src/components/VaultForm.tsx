@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import {
   TextField,
   Button,
-  Box
+  Box,
+  Paper,
 } from '@mui/material';
 
 interface Props {
@@ -23,12 +24,14 @@ const VaultForm: React.FC<Props> = ({ onSubmit }) => {
   };
 
   return (
-    <Box display="flex" gap={2} flexDirection="column" maxWidth={500}>
+    <Paper sx={{ p: 3 }}>
+      <Box display="flex" gap={2} flexDirection="column" maxWidth={500}>
       <TextField label="Nombre" value={nombre} onChange={(e) => setNombre(e.target.value)} />
       <TextField label="Usuario" value={nombreUsuario} onChange={(e) => setNombreUsuario(e.target.value)} />
       <TextField label="Contraseña" value={clave} onChange={(e) => setClave(e.target.value)} />
       <Button variant="contained" onClick={handleSubmit}>Guardar</Button>
-    </Box>
+      </Box>
+    </Paper>
   );
 };
 
