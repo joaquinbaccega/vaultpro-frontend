@@ -28,10 +28,20 @@ export const subirArchivo = async (file: File): Promise<void> => {
   });
 };
 
-export const descargarArchivo = (id: string) => {
+export const descargarArchivo = async (id: string) => {
   const token = localStorage.getItem('token');
-  const url = `${API.defaults.baseURL}/archivos/${id}`;
-  window.open(`${url}?token=${token}`, '_blank');
+  const response = await API.get(`/archivos/${id}/descargar`, {
+    responseType: 'blob',
+    headers: { Authorization: `Bearer ${token}` }
+  });
+
+  const blob = new Blob([response.data], { type: response.headers['content-type'] });
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = getFileNameFromHeader(response.headers['content-disposition']);
+  a.click();
+  window.URL.revokeObjectURL(url);
 };
 
 export const eliminarArchivo = async (id: string): Promise<void> => {
@@ -39,4 +49,9 @@ export const eliminarArchivo = async (id: string): Promise<void> => {
   await API.delete(`/archivos/${id}`, {
     headers: { Authorization: `Bearer ${token}` }
   });
+};
+
+const getFileNameFromHeader = (contentDisposition: string): string => {
+  const match = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/.exec(contentDisposition);
+  return match && match[1] ? match[1].replace(/['"]/g, '') : 'archivo';
 };
