@@ -1,56 +1,53 @@
-// src/components/TwoFADialog.tsx
+import React, { useState } from 'react';
 import {
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
-  Button,
   TextField,
-  InputAdornment,
+  Button,
+  Alert,
 } from '@mui/material';
-import KeyIcon from '@mui/icons-material/Key';
-import { useState } from 'react';
+import { useTwoFA } from '../context/TwoFAContext';
+import API from '../services/api';
 
-interface Props {
-  open: boolean;
-  onSubmit: (codigo: string) => void;
-  onCancel: () => void;
-}
-
-const TwoFADialog = ({ open, onSubmit, onCancel }: Props) => {
+const TwoFADialog: React.FC = () => {
+  const { show2FADialog, complete2FA } = useTwoFA();
   const [codigo, setCodigo] = useState('');
+  const [error, setError] = useState('');
 
-  const handleConfirm = () => {
-    onSubmit(codigo);
-    setCodigo('');
+  const handleSubmit = async () => {
+    try {
+      await API.get('/auth/validar-2fa', {
+        params: { codigo2fa: codigo },
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
+      });
+
+      setCodigo('');
+      setError('');
+      complete2FA(); // Reintenta la acción
+    } catch {
+      setError('Código incorrecto. Intentá nuevamente.');
+    }
   };
 
   return (
-    <Dialog open={open} onClose={onCancel}>
-      <DialogTitle>Verificación en dos pasos</DialogTitle>
+    <Dialog open={show2FADialog} onClose={() => {}}>
+      <DialogTitle>Validación 2FA requerida</DialogTitle>
       <DialogContent>
         <TextField
           autoFocus
-          margin="dense"
-          label="Código 2FA"
-          type="text"
           fullWidth
+          label="Código 2FA"
           value={codigo}
           onChange={(e) => setCodigo(e.target.value)}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <KeyIcon />
-              </InputAdornment>
-            ),
-          }}
         />
+        {error && <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>}
       </DialogContent>
       <DialogActions>
-        <Button onClick={onCancel}>Cancelar</Button>
-        <Button variant="contained" onClick={handleConfirm}>
-          Confirmar
-        </Button>
+        <Button onClick={handleSubmit} variant="contained">Verificar</Button>
       </DialogActions>
     </Dialog>
   );

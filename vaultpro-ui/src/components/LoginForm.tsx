@@ -13,7 +13,7 @@ import {
 import { Email, Lock } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import API from '../services/api';
-import TwoFADialog from './TwoFADialog';
+import TwoFADialogLogin from './TwoFADialogLogin';
 
 const LoginForm = () => {
   const [email, setEmail] = useState('');
@@ -128,11 +128,12 @@ const LoginForm = () => {
         </Box>
       </Fade>
 
-      <TwoFADialog
+      <TwoFADialogLogin
         open={show2FADialog}
         onSubmit={handle2FASubmit}
         onCancel={() => setShow2FADialog(false)}
       />
+
     </>
   );
 };

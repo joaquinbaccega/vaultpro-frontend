@@ -21,3 +21,16 @@ export const activar2FA = async (): Promise<{
   });
   return response.data;
 };
+
+export const obtenerClave = async (id: string): Promise<string> => {
+  const token = localStorage.getItem('token');
+  const response = await API.get(`/auth/ver-clave/${id}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  console.log(`Clave obtenida para ID ${id}:`, response.data.contraseña);
+  
+  return response.data.contraseña;
+};

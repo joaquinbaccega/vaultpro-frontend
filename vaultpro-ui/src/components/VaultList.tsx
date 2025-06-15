@@ -1,23 +1,54 @@
 // src/components/VaultList.tsx
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Box,
   Paper,
   Typography,
   IconButton,
   Stack,
+  Tooltip,
+  CircularProgress,
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import PersonIcon from '@mui/icons-material/Person';
 import LockIcon from '@mui/icons-material/Lock';
-import type { Contraseña } from '../services/passwordService';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import { useTwoFA } from '../context/TwoFAContext';
+import { obtenerClave } from '../services/authService';
+
+interface ContraseñaBase {
+  id: string;
+  nombre: string;
+  nombreUsuario: string;
+}
 
 interface Props {
-  contraseñas: Contraseña[];
+  contraseñas: ContraseñaBase[];
   onDelete: (id: string) => void;
 }
 
 const VaultList: React.FC<Props> = ({ contraseñas, onDelete }) => {
+  const { request2FA } = useTwoFA();
+  const [visibles, setVisibles] = useState<Record<string, string | null>>({});
+  const [loading, setLoading] = useState<string | null>(null);
+
+  const verContraseña = async (id: string) => {
+    setLoading(id);
+
+    try {
+      const clave = await obtenerClave(id);
+      setVisibles((prev) => ({ ...prev, [id]: clave }));
+    } catch (err: any) {
+      if (err.response?.data && err.response?.data?.message?.includes('2FA')) {
+        request2FA(() => verContraseña(id)); // Reintenta cuando se verifique el código
+      } else {
+        alert('No se pudo obtener la contraseña');
+      }
+    } finally {
+      setLoading(null);
+    }
+  };
+
   if (!contraseñas.length) {
     return (
       <Typography variant="body1" color="text.secondary">
@@ -51,7 +82,17 @@ const VaultList: React.FC<Props> = ({ contraseñas, onDelete }) => {
 
             <Box display="flex" alignItems="center" gap={1} mt={0.5}>
               <LockIcon fontSize="small" color="action" />
-              <Typography variant="body2">{c.contraseña}</Typography>
+              {loading === c.id ? (
+                <CircularProgress size={16} />
+              ) : visibles[c.id] ? (
+                <Typography variant="body2">{visibles[c.id]}</Typography>
+              ) : (
+                <Tooltip title="Ver contraseña">
+                  <IconButton size="small" onClick={() => verContraseña(c.id)}>
+                    <VisibilityIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+              )}
             </Box>
           </Box>
 
